@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📱 ShadowSpeak Mobile - AI 쉐도윙 학습앱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .mobile-container {
+            max-width: 375px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 25px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            min-height: 800px;
+        }
+
+        .status-bar {
+            background: #000;
+            color: white;
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-left {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .signal-bars {
+            display: flex;
+            gap: 2px;
+        }
+
+        .signal-bar {
+            width: 3px;
+            background: white;
+            border-radius: 1px;
+        }
+
+        .signal-bar:nth-child(1) { height: 4px; }
+        .signal-bar:nth-child(2) { height: 6px; }
+        .signal-bar:nth-child(3) { height: 8px; }
+        .signal-bar:nth-child(4) { height: 10px; }
+
+        .battery {
+            width: 24px;
+            height: 12px;
+            border: 1px solid white;
+            border-radius: 2px;
+            position: relative;
+        }
+
+        .battery::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            right: -3px;
+            width: 2px;
+            height: 6px;
+            background: white;
+            border-radius: 0 1px 1px 0;
+        }
+
+        .battery-level {
+            height: 100%;
+            width: 80%;
+            background: white;
+            border-radius: 1px;
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .app-header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .app-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .notch {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140px;
+            height: 20px;
+            background: black;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .tab-bar {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 10px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #666;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab.active {
+            color: #667eea;
+            background: white;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 3px;
+            background: #667eea;
+            border-radius: 2px;
+        }
+
+        .tab-content {
+            padding: 20px;
+            min-height: 500px;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        /* Home Tab Styles */
+        .level-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .level-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .level-progress {
+            background: rgba(255,255,255,0.3);
+            border-radius: 50px;
+            height: 8px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .level-progress-fill {
+            background: white;
+            height: 100%;
+            border-radius: 50px;
+            transition: width 0.5s ease;
+        }
+
+        .level-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .action-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .action-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .action-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .action-subtitle {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .recent-activity {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .recent-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .recent-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .recent-item:last-child {
+            border-bottom: none;
+        }
+
+        .recent-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 1.2rem;
+        }
+
+        .recent-content {
+            flex: 1;
+        }
+
+        .recent-text {
+            font-weight: 500;
+            margin-bottom: 2px;
+            color: #333;
+        }
+
+        .recent-meta {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        /* Practice Tab Styles */
+        .practice-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .practice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .practice-title {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .practice-level {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .sentence-display {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .english-sentence {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .korean-translation {
+            font-size: 0.95rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        .blank-word {
+            display: inline-block;
+            min-width: 60px;
+            height: 25px;
+            border-bottom: 2px solid #667eea;
+            margin: 0 3px;
+            text-align: center;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .blank-word.filled {
+            background: #667eea;
+            color: white;
+        }
+
+        .blank-word.correct {
+            background: #28a745;
+            color: white;
+        }
+
+        .blank-word.wrong {
+            background: #dc3545;
+            color: white;
+        }
+
+        .practice-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .control-btn {
+            flex: 1;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .control-btn:hover {
+            background: #e9ecef;
+        }
+
+        .control-btn.primary {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .control-btn.primary:hover {
+            background: #5a6fd8;
+        }
+
+        .word-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .word-option {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .word-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .word-option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .audio-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .audio-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+        }
+
+        .audio-btn.play {
+            background: #28a745;
+            color: white;
+        }
+
+        .audio-btn.record {
+            background: #dc3545;
+            color: white;
+        }
+
+        .audio-btn.slow {
+            background: #667eea;
+            color: white;
+        }
+
+        .audio-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* Progress Tab Styles */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .chart-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .chart-placeholder {
+            height: 120px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* Search Tab Styles */
+        .search-box {
+            background: white;
+            border-radius: 25px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        .search-icon {
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .filter-chips {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            margin-bottom: 20px;
+            padding-bottom: 5px;
+        }
+
+        .filter-chip {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            padding: 8px 15px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-chip.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .search-result {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .result-english {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .result-korean {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+
+        .result-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .result-source {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn-small {
+            background: #f8f9fa;
+            border: none;
+            border-radius: 15px;
+            padding: 5px 10px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn-small:hover {
+            background: #e9ecef;
+        }
+
+        /* Profile Tab Styles */
+        .profile-header {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .profile-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .profile-level {
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .profile-menu {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 18px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item:hover {
+            background: #f8f9fa;
+        }
+
+        .menu-icon {
+            width: 20px;
+            text-align: center;
+            margin-right: 15px;
+            color: #667eea;
+        }
+
+        .menu-text {
+            flex: 1;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .menu-arrow {
+            color: #ccc;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 375px;
+            max-width: 375px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0 20px;
+            border-radius: 20px 20px 0 0;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 5px;
+        }
+
+        .nav-item.active {
+            color: #667eea;
+        }
+
+        .nav-icon {
+            font-size: 1.3rem;
+            margin-bottom: 3px;
+        }
+
+        .nav-label {
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 90px;
+            right: 30px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            z-index: 99;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab-pane.active {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .recording {
+            animation: pulse 1s infinite;
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        /* Dark mode toggle */
+        .dark-mode {
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .dark-mode .mobile-container {
+            background: #2d2d2d;
+        }
+
+        .dark-mode .tab-content {
+            background: #2d2d2d;
+        }
+
+        .dark-mode .action-card,
+        .dark-mode .recent-activity,
+        .dark-mode .practice-card,
+        .dark-mode .stat-card,
+        .dark-mode .chart-container,
+        .dark-mode .search-box,
+        .dark-mode .search-result,
+        .dark-mode .profile-header,
+        .dark-mode .profile-menu {
+            background: #3d3d3d;
+            color: #fff;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 320px) {
+            .mobile-container {
+                width: 100%;
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .bottom-nav {
+                width: 100%;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status-left">
+                <span>9:41</span>
+                <div class="signal-bars">
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                </div>
+                <span>5G</span>
+            </div>
+            <div>
+                100%
+                <div class="battery">
+                    <div class="battery-level"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- App Header -->
+        <div class="app-header">
+            <div class="notch"></div>
+            <h1>ShadowSpeak</h1>
+            <p>AI 기반 쉐도윙 영어 학습</p>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-bar">
+            <button class="tab active" onclick="switchTab('home')">🏠 홈</button>
+            <button class="tab" onclick="switchTab('practice')">📝 연습</button>
+            <button class="tab" onclick="switchTab('themes')">🎭 테마</button>
+            <button class="tab" onclick="switchTab('search')">🔍 검색</button>
+            <button class="tab" onclick="switchTab('profile')">👤 프로필</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Home Tab -->
+            <div class="tab-pane active" id="home">
+                <!-- Level Progress Card -->
+                <div class="level-card">
+                    <div class="level-title">📚 중급 (Intermediate)</div>
+                    <div class="level-progress">
+                        <div class="level-progress-fill" style="width: 68%"></div>
+                    </div>
+                    <div class="level-stats">
+                        <span>레벨 3</span>
+                        <span>68% 완료</span>
+                        <span>32/47 완료</span>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <div class="action-card" onclick="startPractice('daily')">
+                        <div class="action-icon">🎯</div>
+                        <div class="action-title">오늘의 연습</div>
+                        <div class="action-subtitle">15분 쉐도윙</div>
+                    </div>
+                    <div class="action-card" onclick="startPractice('exam')">
+                        <div class="action-icon">📝</div>
+                        <div class="action-title">시험 준비</div>
+                        <div class="action-subtitle">TOEIC 특화</div>
+                    </div>
+                    <div class="action-card" onclick="startPractice('conversation')">
+                        <div class="action-icon">💬</div>
+                        <div class="action-title">일상 대화</div>
+                        <div class="action-subtitle">실전 연습</div>
+                    </div>
+                    <div class="action-card" onclick="startPractice('pronunciation')">
+                        <div class="action-icon">🗣️</div>
+                        <div class="action-title">발음 교정</div>
+                        <div class="action-subtitle">AI 분석</div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="recent-activity">
+                    <div class="recent-title">📱 최근 활동</div>
+                    <div class="recent-item">
+                        <div class="recent-icon" style="background: #667eea; color: white;">🎬</div>
+                        <div class="recent-content">
+                            <div class="recent-text">Friends S01E01 - "How are you?"</div>
+                            <div class="recent-meta">15분 전 • 쉐도윙 완료</div>
+                        </div>
+                    </div>
+                    <div class="recent-item">
+                        <div class="recent-icon" style="background: #28a745; color: white;">✅</div>
+                        <div class="recent-content">
+                            <div class="recent-text">발음 연습 - 정확도 87%</div>
+                            <div class="recent-meta">1시간 전 • 목표 달성</div>
+                        </div>
+                    </div>
+                    <div class="recent-item">
+                        <div class="recent-icon" style="background: #ffc107; color: black;">⭐</div>
+                        <div class="recent-content">
+                            <div class="recent-text">단어 퀴즈 - 95점</div>
+                            <div class="recent-meta">3시간 전 • 신기록</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Practice Tab -->
+            <div class="tab-pane" id="practice">
+                <div class="practice-card">
+                    <div class="practice-header">
+                        <div class="practice-title">📺 Friends S01E01</div>
+                        <div class="practice-level">중급</div>
+                    </div>
+
+                    <div class="sentence-display">
+                        <div class="english-sentence">
+                            "How are <span class="blank-word" onclick="selectBlank(this)" data-answer="you">___</span> doing today?"
+                        </div>
+                        <div class="korean-translation">"오늘 어떻게 지내?"</div>
+                    </div>
+
+                    <div class="word-options">
+                        <div class="word-option" onclick="selectOption(this, 'you')">you</div>
+                        <div class="word-option" onclick="selectOption(this, 'we')">we</div>
+                        <div class="word-option" onclick="selectOption(this, 'they')">they</div>
+                    </div>
+
+                    <div class="audio-controls">
+                        <button class="audio-btn slow" onclick="playAudio('slow')" title="느린 속도">🐌</button>
+                        <button class="audio-btn play" onclick="playAudio('normal')" title="재생">▶️</button>
+                        <button class="audio-btn record" onclick="toggleRecording()" title="녹음">🎤</button>
+                    </div>
+
+                    <div class="practice-controls">
+                        <button class="control-btn" onclick="showHint()">💡 힌트</button>
+                        <button class="control-btn" onclick="checkAnswer()">✅ 확인</button>
+                        <button class="control-btn primary" onclick="nextSentence()">다음 ➡️</button>
+                    </div>
+                </div>
+
+                <div class="practice-card">
+                    <div class="practice-header">
+                        <div class="practice-title">🎬 The Office S03E07</div>
+                        <div class="practice-level">고급</div>
+                    </div>
+
+                    <div class="sentence-display">
+                        <div class="english-sentence">
+                            "I <span class="blank-word" onclick="selectBlank(this)" data-answer="appreciate">___</span> your <span class="blank-word" onclick="selectBlank(this)" data-answer="help">___</span> with this project."
+                        </div>
+                        <div class="korean-translation">"이 프로젝트에 도움을 주셔서 감사합니다."</div>
+                    </div>
+
+                    <div class="word-options">
+                        <div class="word-option" onclick="selectOption(this, 'appreciate')">appreciate</div>
+                        <div class="word-option" onclick="selectOption(this, 'understand')">understand</div>
+                        <div class="word-option" onclick="selectOption(this, 'help')">help</div>
+                        <div class="word-option" onclick="selectOption(this, 'support')">support</div>
+                        <div class="word-option" onclick="selectOption(this, 'advice')">advice</div>
+                        <div class="word-option" onclick="selectOption(this, 'assistance')">assistance</div>
+                    </div>
+
+                    <div class="audio-controls">
+                        <button class="audio-btn slow" onclick="playAudio('slow')" title="느린 속도">🐌</button>
+                        <button class="audio-btn play" onclick="playAudio('normal')" title="재생">▶️</button>
+                        <button class="audio-btn record" onclick="toggleRecording()" title="녹음">🎤</button>
+                    </div>
+
+                    <div class="practice-controls">
+                        <button class="control-btn" onclick="showHint()">💡 힌트</button>
+                        <button class="control-btn" onclick="checkAnswer()">✅ 확인</button>
+                        <button class="control-btn primary" onclick="nextSentence()">다음 ➡️</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Tab -->
+            <div class="tab-pane" id="progress">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">247</div>
+                        <div class="stat-label">완료한 문장</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">15</div>
+                        <div class="stat-label">연속 학습일</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">87%</div>
+                        <div class="stat-label">평균 정확도</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">42h</div>
+                        <div class="stat-label">총 학습시간</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">📈 주간 학습 진도</div>
+                    <div class="chart-placeholder">
+                        월: 23분 | 화: 31분 | 수: 18분 | 목: 45분 | 금: 29분 | 토: 37분 | 일: 22분
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">🎯 발음 정확도 추이</div>
+                    <div class="chart-placeholder">
+                        지난주: 82% → 이번주: 87% (+5% 개선)
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">🏆 달성한 배지</div>
+                    <div class="chart-placeholder">
+                        🔥 연속학습 🎯 정확도왕 ⭐ 빠른학습 📚 어휘왕 🗣️ 발음킹
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Tab -->
+            <div class="tab-pane" id="search">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-input" placeholder="영어 문장을 검색하세요..." onkeyup="performMobileSearch(this.value)">
+                </div>
+
+                <div class="filter-chips">
+                    <div class="filter-chip active" onclick="toggleChip(this, 'all')">전체</div>
+                    <div class="filter-chip" onclick="toggleChip(this, 'toeic')">TOEIC</div>
+                    <div class="filter-chip" onclick="toggleChip(this, 'toefl')">TOEFL</div>
+                    <div class="filter-chip" onclick="toggleChip(this, 'csat')">수능</div>
+                    <div class="filter-chip" onclick="toggleChip(this, 'business')">비즈니스</div>
+                    <div class="filter-chip" onclick="toggleChip(this, 'daily')">일상</div>
+                    <div class="filter-chip" onclick="toggleChip(this, 'travel')">여행</div>
+                </div>
+
+                <div id="searchResults">
+                    <div class="search-result">
+                        <div class="result-english">"How are you doing?"</div>
+                        <div class="result-korean">"어떻게 지내?"</div>
+                        <div class="result-meta">
+                            <div class="result-source">
+                                <span>📺</span>
+                                <span>Friends S01E01</span>
+                            </div>
+                            <div class="result-actions">
+                                <button class="action-btn-small" onclick="addToFavorites(this)">⭐</button>
+                                <button class="action-btn-small" onclick="startShadowing(this)">🎯</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="search-result">
+                        <div class="result-english">"Thank you for your help."</div>
+                        <div class="result-korean">"도움 주셔서 감사합니다."</div>
+                        <div class="result-meta">
+                            <div class="result-source">
+                                <span>🎬</span>
+                                <span>The Office S03E07</span>
+                            </div>
+                            <div class="result-actions">
+                                <button class="action-btn-small" onclick="addToFavorites(this)">⭐</button>
+                                <button class="action-btn-small" onclick="startShadowing(this)">🎯</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="search-result">
+                        <div class="result-english">"Could you please explain?"</div>
+                        <div class="result-korean">"설명해 주실 수 있나요?"</div>
+                        <div class="result-meta">
+                            <div class="result-source">
+                                <span>📚</span>
+                                <span>TOEIC Speaking</span>
+                            </div>
+                            <div class="result-actions">
+                                <button class="action-btn-small" onclick="addToFavorites(this)">⭐</button>
+                                <button class="action-btn-small" onclick="startShadowing(this)">🎯</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div class="tab-pane" id="profile">
+                <div class="profile-header">
+                    <div class="profile-avatar">김학습</div>
+                    <div class="profile-name">김학습</div>
+                    <div class="profile-level">중급 레벨 3 • 68% 완료</div>
+                </div>
+
+                <div class="profile-menu">
+                    <div class="menu-item" onclick="showSettings()">
+                        <div class="menu-icon">⚙️</div>
+                        <div class="menu-text">설정</div>
+                        <div class="menu-arrow">›</div>
+                    </div>
+                    <div class="menu-item" onclick="showAchievements()">
+                        <div class="menu-icon">🏆</div>
+                        <div class="menu-text">배지 및 성취</div>
+                        <div class="menu-arrow">›</div>
+                    </div>
+                    <div class="menu-item" onclick="showFavorites()">
+                        <div class="menu-icon">⭐</div>
+                        <div class="menu-text">즐겨찾기</div>
+                        <div class="menu-arrow">›</div>
+                    </div>
+                    <div class="menu-item" onclick="showStats()">
+                        <div class="menu-icon">📊</div>
+                        <div class="menu-text">학습 통계</div>
+                        <div class="menu-arrow">›</div>
+                    </div>
+                    <div class="menu-item" onclick="showOfflineContent()">
+                        <div class="menu-icon">📱</div>
+                        <div class="menu-text">오프라인 콘텐츠</div>
+                        <div class="menu-arrow">›</div>
+                    </div>
+                    <div class="menu-item" onclick="contactSupport()">
+                        <div class="menu-icon">💬</div>
+                        <div class="menu-text">고객 지원</div>
+                        <div class="menu-arrow">›</div>
+                    </div>
+                    <div class="menu-item" onclick="showAbout()">
+                        <div class="menu-icon">ℹ️</div>
+                        <div class="menu-text">앱 정보</div>
+                        <div class="menu-arrow">›</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <button class="fab" onclick="quickPractice()" title="빠른 연습">⚡</button>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Global Variables
+        let currentTab = 'home';
+        let selectedBlank = null;
+        let isRecording = false;
+        let practiceScore = 0;
+        let currentSentenceIndex = 0;
+
+        // Tab Switching
+        function switchTab(tabName) {
+            // Remove active class from all tabs and panes
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+            
+            // Add active class to selected tab and pane
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            currentTab = tabName;
+            
+            // Trigger tab-specific actions
+            if (tabName === 'progress') {
+                updateProgressStats();
+            }
+        }
+
+        // Practice Functions
+        function selectBlank(element) {
+            // Remove selection from other blanks
+            document.querySelectorAll('.blank-word').forEach(blank => {
+                blank.classList.remove('selected');
+            });
+            
+            // Select current blank
+            element.classList.add('selected');
+            selectedBlank = element;
+            
+            showToast('빈칸을 선택했습니다. 아래에서 정답을 선택하세요.');
+        }
+
+        function selectOption(element, word) {
+            if (!selectedBlank) {
+                showToast('먼저 빈칸을 선택하세요.');
+                return;
+            }
+            
+            // Remove selection from other options
+            document.querySelectorAll('.word-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Select current option
+            element.classList.add('selected');
+            
+            // Fill the blank
+            selectedBlank.textContent = word;
+            selectedBlank.classList.add('filled');
+            
+            showToast(`"${word}"를 선택했습니다.`);
+        }
+
+        function checkAnswer() {
+            const blanks = document.querySelectorAll('.blank-word');
+            let correct = 0;
+            let total = blanks.length;
+            
+            blanks.forEach(blank => {
+                const userAnswer = blank.textContent.trim();
+                const correctAnswer = blank.dataset.answer;
+                
+                if (userAnswer === correctAnswer) {
+                    blank.classList.add('correct');
+                    blank.classList.remove('wrong');
+                    correct++;
+                } else {
+                    blank.classList.add('wrong');
+                    blank.classList.remove('correct');
+                }
+            });
+            
+            const accuracy = Math.round((correct / total) * 100);
+            practiceScore = accuracy;
+            
+            if (accuracy >= 80) {
+                showToast(`🎉 훌륭해요! 정확도 ${accuracy}%`);
+            } else {
+                showToast(`📚 다시 도전해보세요! 정확도 ${accuracy}%`);
+            }
+        }
+
+        function showHint() {
+            if (selectedBlank) {
+                const answer = selectedBlank.dataset.answer;
+                const hint = `힌트: "${answer}"는 ${answer.length}글자입니다.`;
+                showToast(hint);
+            } else {
+                showToast('먼저 빈칸을 선택하세요.');
+            }
+        }
+
+        function nextSentence() {
+            currentSentenceIndex++;
+            // In real app, this would load the next sentence
+            showToast('다음 문장을 불러오는 중...');
+            
+            // Reset the current practice
+            setTimeout(() => {
+                resetPractice();
+            }, 1000);
+        }
+
+        function resetPractice() {
+            document.querySelectorAll('.blank-word').forEach(blank => {
+                blank.textContent = '___';
+                blank.classList.remove('filled', 'correct', 'wrong', 'selected');
+            });
+            
+            document.querySelectorAll('.word-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            selectedBlank = null;
+        }
+
+        // Audio Functions
+        function playAudio(speed) {
+            const speedText = speed === 'slow' ? '느린 속도로' : '정상 속도로';
+            showToast(`🔊 ${speedText} 재생 중...`);
+            
+            // Simulate audio playback
+            setTimeout(() => {
+                showToast('재생 완료');
+            }, 2000);
+        }
+
+        function toggleRecording() {
+            const recordBtn = document.querySelector('.audio-btn.record');
+            
+            if (!isRecording) {
+                isRecording = true;
+                recordBtn.textContent = '⏹️';
+                recordBtn.classList.add('recording');
+                showToast('🎤 녹음 시작... 문장을 따라 읽어보세요.');
+            } else {
+                isRecording = false;
+                recordBtn.textContent = '🎤';
+                recordBtn.classList.remove('recording');
+                showToast('📊 녹음 완료! AI가 발음을 분석 중...');
+                
+                // Simulate AI analysis
+                setTimeout(() => {
+                    const accuracy = Math.floor(Math.random() * 20) + 80; // 80-100%
+                    showToast(`🎯 발음 정확도: ${accuracy}%`);
+                }, 3000);
+            }
+        }
+
+        // Search Functions
+        function performMobileSearch(query) {
+            if (query.length < 2) return;
+            
+            const results = [
+                {
+                    english: `"${query}" related sentence 1`,
+                    korean: `"${query}" 관련 문장 1`,
+                    source: 'Friends S02E05'
+                },
+                {
+                    english: `"${query}" related sentence 2`,
+                    korean: `"${query}" 관련 문장 2`,
+                    source: 'The Office S01E03'
+                }
+            ];
+            
+            updateSearchResults(results);
+        }
+
+        function updateSearchResults(results) {
+            const container = document.getElementById('searchResults');
+            container.innerHTML = '';
+            
+            results.forEach(result => {
+                const resultElement = document.createElement('div');
+                resultElement.className = 'search-result';
+                resultElement.innerHTML = `
+                    <div class="result-english">"${result.english}"</div>
+                    <div class="result-korean">"${result.korean}"</div>
+                    <div class="result-meta">
+                        <div class="result-source">
+                            <span>📺</span>
+                            <span>${result.source}</span>
+                        </div>
+                        <div class="result-actions">
+                            <button class="action-btn-small" onclick="addToFavorites(this)">⭐</button>
+                            <button class="action-btn-small" onclick="startShadowing(this)">🎯</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(resultElement);
+            });
+        }
+
+        function toggleChip(element, filter) {
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.classList.remove('active');
+            });
+            element.classList.add('active');
+            
+            showToast(`"${element.textContent}" 필터 적용됨`);
+        }
+
+        // Quick Actions
+        function startPractice(type) {
+            const types = {
+                'daily': '오늘의 연습',
+                'exam': '시험 준비',
+                'conversation': '일상 대화',
+                'pronunciation': '발음 교정'
+            };
+            
+            showToast(`${types[type]} 시작!`);
+            switchTab('practice');
+        }
+
+        function quickPractice() {
+            showToast('⚡ 빠른 연습 모드 시작!');
+            switchTab('practice');
+        }
+
+        function addToFavorites(button) {
+            button.textContent = '⭐';
+            button.style.background = '#ffc107';
+            showToast('즐겨찾기에 추가되었습니다!');
+        }
+
+        function startShadowing(button) {
+            showToast('쉐도윙 연습을 시작합니다!');
+            switchTab('practice');
+        }
+
+        // Profile Functions
+        function showSettings() {
+            showToast('설정 화면으로 이동 중...');
+        }
+
+        function showAchievements() {
+            showToast('🏆 배지: 연속학습 15일, 정확도왕, 빠른학습자');
+        }
+
+        function showFavorites() {
+            showToast('⭐ 즐겨찾기 목록을 불러오는 중...');
+        }
+
+        function showStats() {
+            showToast('📊 상세 통계를 불러오는 중...');
+        }
+
+        function showOfflineContent() {
+            showToast('📱 오프라인 콘텐츠: 23개 문장 다운로드됨');
+        }
+
+        function contactSupport() {
+            showToast('💬 고객지원팀과 연결 중...');
+        }
+
+        function showAbout() {
+            showToast('ℹ️ ShadowSpeak v2.1.0 • 270K+ 문장 DB');
+        }
+
+        // Progress Updates
+        function updateProgressStats() {
+            const stats = document.querySelectorAll('.stat-number');
+            if (stats.length > 0) {
+                // Animate numbers
+                stats.forEach((stat, index) => {
+                    const finalValue = parseInt(stat.textContent);
+                    let currentValue = 0;
+                    const increment = finalValue / 20;
+                    
+                    const animation = setInterval(() => {
+                        currentValue += increment;
+                        if (currentValue >= finalValue) {
+                            stat.textContent = finalValue + (stat.nextElementSibling.textContent.includes('%') ? '%' : (stat.nextElementSibling.textContent.includes('h') ? 'h' : ''));
+                            clearInterval(animation);
+                        } else {
+                            stat.textContent = Math.floor(currentValue);
+                        }
+                    }, 50);
+                });
+            }
+        }
+
+        // Toast Notification System
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', function() {
+            showToast('👋 ShadowSpeak에 오신 것을 환영합니다!');
+            
+            // Simulate loading user data
+            setTimeout(() => {
+                showToast('📚 학습 데이터를 동기화했습니다.');
+            }, 2000);
+        });
+
+        // Keyboard shortcuts for mobile
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && currentTab === 'practice') {
+                checkAnswer();
+            } else if (e.key === ' ' && currentTab === 'practice') {
+                e.preventDefault();
+                playAudio('normal');
+            }
+        });
+
+        // Touch gestures simulation
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0) {
+                    // Swipe left - next tab
+                    const tabs = ['home', 'practice', 'progress', 'search', 'profile'];
+                    const currentIndex = tabs.indexOf(currentTab);
+                    if (currentIndex < tabs.length - 1) {
+                        switchTab(tabs[currentIndex + 1]);
+                        document.querySelectorAll('.tab')[currentIndex + 1].click();
+                    }
+                } else {
+                    // Swipe right - previous tab
+                    const tabs = ['home', 'practice', 'progress', 'search', 'profile'];
+                    const currentIndex = tabs.indexOf(currentTab);
+                    if (currentIndex > 0) {
+                        switchTab(tabs[currentIndex - 1]);
+                        document.querySelectorAll('.tab')[currentIndex - 1].click();
+                    }
+                }
+            }
+        }
+
+        // Auto-save progress
+        setInterval(() => {
+            // Simulate auto-save
+            console.log('Auto-saving progress...');
+        }, 30000); // Every 30 seconds
+
+        // Network status handling
+        window.addEventListener('online', () => {
+            showToast('📶 인터넷에 연결되었습니다.');
+        });
+
+        window.addEventListener('offline', () => {
+            showToast('📴 오프라인 모드로 전환되었습니다.');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Batch Search - 다중 문장 동시 검색 시스템</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        /* Left Sidebar - Batch Input */
+        .batch-input {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 20px;
+        }
+
+        .batch-input h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-method-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .tab-btn.active {
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            color: #4facfe;
+        }
+
+        .input-section {
+            display: none;
+        }
+
+        .input-section.active {
+            display: block;
+        }
+
+        .textarea-input {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+        }
+
+        .textarea-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .sentence-builder {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .sentence-input-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f8f9ff;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e8e8ff;
+        }
+
+        .sentence-number {
+            background: #4facfe;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .sentence-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .sentence-input:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .remove-sentence {
+            background: #ff4757;
+            color: white;
+            border: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .add-sentence-btn {
+            background: #4facfe;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .add-sentence-btn:hover {
+            background: #3b93fe;
+            transform: translateY(-1px);
+        }
+
+        .search-options {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .search-options h3 {
+            font-size: 1rem;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .option-group {
+            margin-bottom: 15px;
+        }
+
+        .option-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .option-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+        }
+
+        .search-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .search-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px 20px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .clear-btn {
+            background: white;
+            color: #666;
+            border: 2px solid #e0e0e0;
+        }
+
+        .clear-btn:hover {
+            background: #f8f9fa;
+            border-color: #ccc;
+        }
+
+        .template-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .template-btn {
+            background: #e8f4fd;
+            color: #4facfe;
+            border: 1px solid #4facfe;
+            border-radius: 8px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            text-align: left;
+            transition: all 0.3s ease;
+        }
+
+        .template-btn:hover {
+            background: #4facfe;
+            color: white;
+        }
+
+        /* Right Area - Search Results */
+        .search-results {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            min-height: 600px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .results-count {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .results-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .action-btn:hover {
+            background: #e9ecef;
+        }
+
+        .action-btn.primary {
+            background: #4facfe;
+            color: white;
+            border-color: #4facfe;
+        }
+
+        .action-btn.primary:hover {
+            background: #3b93fe;
+        }
+
+        .search-progress {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .progress-title {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .progress-stats {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .progress-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+        }
+
+        .progress-status {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: white;
+        }
+
+        .progress-status.searching {
+            background: #ffa726;
+            animation: pulse 1.5s infinite;
+        }
+
+        .progress-status.found {
+            background: #66bb6a;
+        }
+
+        .progress-status.not-found {
+            background: #ef5350;
+        }
+
+        .progress-status.pending {
+            background: #bbb;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .results-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .result-item {
+            background: white;
+            border: 2px solid #f0f0f0;
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .result-item:hover {
+            border-color: #4facfe;
+            box-shadow: 0 5px 20px rgba(79, 172, 254, 0.15);
+        }
+
+        .result-item.found {
+            border-color: #66bb6a;
+            background: #f8fff8;
+        }
+
+        .result-item.not-found {
+            border-color: #ef5350;
+            background: #fff8f8;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .query-number {
+            background: #4facfe;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-right: 15px;
+        }
+
+        .query-text {
+            flex: 1;
+            font-weight: 600;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .result-status {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .result-status.found {
+            background: #e8f5e8;
+            color: #2e7d2e;
+        }
+
+        .result-status.not-found {
+            background: #fde8e8;
+            color: #c62828;
+        }
+
+        .matches {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .match-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .match-item:hover {
+            background: #f0f8ff;
+            border-color: #4facfe;
+        }
+
+        .match-text {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .match-highlight {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .match-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .match-source {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .match-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .match-action {
+            background: none;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+        }
+
+        .match-action:hover {
+            background: rgba(79, 172, 254, 0.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .empty-state p {
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .sample-queries {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .sample-queries h4 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .sample-query {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sample-query:hover {
+            border-color: #4facfe;
+            background: #f8f9ff;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 350px 1fr;
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .batch-input {
+                position: static;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-item {
+            animation: fadeInUp 0.4s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🚀 Batch Search</h1>
+            <p>다중 문장 동시 검색 시스템 - 최대 20개 문장을 한 번에 검색하여 270K+ 자막 데이터베이스에서 매칭</p>
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span>📊</span>
+                    <span>270,143개 문장</span>
+                </div>
+                <div class="stat-item">
+                    <span>⚡</span>
+                    <span>병렬 처리</span>
+                </div>
+                <div class="stat-item">
+                    <span>🎯</span>
+                    <span>정확도 95%+</span>
+                </div>
+                <div class="stat-item">
+                    <span>🔍</span>
+                    <span>퍼지 매칭</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Sidebar - Batch Input -->
+            <div class="batch-input">
+                <h2>📝 검색 문장 입력</h2>
+                
+                <!-- Input Method Tabs -->
+                <div class="input-method-tabs">
+                    <button class="tab-btn active" onclick="switchInputMethod('bulk')">일괄 입력</button>
+                    <button class="tab-btn" onclick="switchInputMethod('individual')">개별 입력</button>
+                </div>
+
+                <!-- Template Buttons -->
+                <div class="template-buttons">
+                    <button class="template-btn" onclick="loadTemplate('toeic')">
+                        📚 TOEIC 필수 표현 (15개 문장)
+                    </button>
+                    <button class="template-btn" onclick="loadTemplate('business')">
+                        💼 비즈니스 회화 (12개 문장)
+                    </button>
+                    <button class="template-btn" onclick="loadTemplate('travel')">
+                        ✈️ 여행 영어 (18개 문장)
+                    </button>
+                </div>
+
+                <!-- Bulk Input Section -->
+                <div class="input-section active" id="bulkInput">
+                    <textarea 
+                        class="textarea-input" 
+                        id="bulkTextarea"
+                        placeholder="한 줄에 하나씩 검색할 문장을 입력하세요:
+
+How are you doing?
+I'd like to make a reservation
+What time does the meeting start?
+Could you help me with this?
+I'm looking forward to it"
+                    ></textarea>
+                </div>
+
+                <!-- Individual Input Section -->
+                <div class="input-section" id="individualInput">
+                    <div class="sentence-builder" id="sentenceBuilder">
+                        <div class="sentence-input-row">
+                            <div class="sentence-number">1</div>
+                            <input type="text" class="sentence-input" placeholder="검색할 문장을 입력하세요...">
+                            <button class="remove-sentence" onclick="removeSentence(this)">×</button>
+                        </div>
+                    </div>
+                    <button class="add-sentence-btn" onclick="addSentenceInput()">
+                        <span>➕</span>
+                        <span>문장 추가</span>
+                    </button>
+                </div>
+
+                <!-- Search Options -->
+                <div class="search-options">
+                    <h3>🔧 검색 옵션</h3>
+                    
+                    <div class="option-group">
+                        <label>매칭 정확도</label>
+                        <select class="option-select" id="matchAccuracy">
+                            <option value="exact">정확 매칭 (100%)</option>
+                            <option value="high" selected>높은 유사도 (90%+)</option>
+                            <option value="medium">중간 유사도 (75%+)</option>
+                            <option value="low">낮은 유사도 (60%+)</option>
+                        </select>
+                    </div>
+
+                    <div class="option-group">
+                        <label>소스 필터</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" checked> Friends
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" checked> Movies
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" checked> The Office
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" checked> Documentaries
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="option-group">
+                        <label>결과 수 제한</label>
+                        <select class="option-select" id="resultLimit">
+                            <option value="5">문장당 최대 5개</option>
+                            <option value="10" selected>문장당 최대 10개</option>
+                            <option value="20">문장당 최대 20개</option>
+                            <option value="all">모든 결과</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Search Actions -->
+                <div class="search-actions">
+                    <button class="search-btn" id="searchBtn" onclick="performBatchSearch()">
+                        <span>🚀</span>
+                        <span>배치 검색 시작</span>
+                    </button>
+                    <button class="search-btn clear-btn" onclick="clearAll()">
+                        <span>🗑️</span>
+                        <span>모두 초기화</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Area - Search Results -->
+            <div class="search-results">
+                <div class="results-header">
+                    <div class="results-count" id="resultsCount">검색 결과를 기다리는 중...</div>
+                    <div class="results-actions">
+                        <button class="action-btn" onclick="exportResults()">
+                            <span>📤</span>
+                            <span>결과 내보내기</span>
+                        </button>
+                        <button class="action-btn" onclick="saveResults()">
+                            <span>💾</span>
+                            <span>결과 저장</span>
+                        </button>
+                        <button class="action-btn primary" onclick="createLearningSet()">
+                            <span>🎯</span>
+                            <span>학습 세트 생성</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search Progress -->
+                <div class="search-progress" id="searchProgress">
+                    <div class="progress-header">
+                        <div class="progress-title">배치 검색 진행 중...</div>
+                        <div class="progress-stats" id="progressStats">0 / 0 완료</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-items" id="progressItems">
+                        <!-- Progress items will be dynamically added -->
+                    </div>
+                </div>
+
+                <!-- Search Results Container -->
+                <div id="searchResultsContainer">
+                    <!-- Initial empty state -->
+                    <div class="empty-state">
+                        <h3>🚀 배치 검색을 시작해보세요</h3>
+                        <p>여러 문장을 한 번에 입력하면 270K+ 자막 데이터베이스에서 동시에 검색합니다.</p>
+                        <p>정확한 매칭부터 유사한 표현까지 모두 찾아드립니다.</p>
+                        
+                        <div class="sample-queries">
+                            <h4>📝 샘플 검색 문장들:</h4>
+                            <div class="sample-query" onclick="loadSample(this)">How are you doing today?</div>
+                            <div class="sample-query" onclick="loadSample(this)">I'd like to make a reservation for two</div>
+                            <div class="sample-query" onclick="loadSample(this)">What time does the meeting start?</div>
+                            <div class="sample-query" onclick="loadSample(this)">Could you please help me with this?</div>
+                            <div class="sample-query" onclick="loadSample(this)">I'm really looking forward to it</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentQueries = [];
+        let searchResults = [];
+        let isSearching = false;
+
+        // Sample data for different templates
+        const templates = {
+            toeic: [
+                "How long have you been working here?",
+                "I'd like to schedule a meeting",
+                "Could you send me the report?",
+                "When is the deadline for this project?",
+                "I'm afraid I can't make it to the meeting",
+                "Would you mind if I asked you a question?",
+                "I need to discuss this with my supervisor",
+                "The presentation went very well",
+                "We should consider all the options",
+                "I appreciate your help with this matter",
+                "Could you please clarify what you mean?",
+                "I'm looking forward to working with you",
+                "We need to meet the deadline",
+                "I'll get back to you as soon as possible",
+                "Thank you for your cooperation"
+            ],
+            business: [
+                "Let's schedule a conference call",
+                "I need to review the quarterly reports",
+                "Could you prepare the financial statements?",
+                "We should discuss the marketing strategy",
+                "I'd like to propose a new initiative",
+                "The budget needs to be approved",
+                "Let's analyze the market trends",
+                "We need to increase our productivity",
+                "I'll send you the contract details",
+                "Could you update me on the progress?",
+                "We should consider expanding overseas",
+                "The client is very satisfied with our service"
+            ],
+            travel: [
+                "I'd like to book a flight to New York",
+                "How much does a round trip ticket cost?",
+                "Could you recommend a good hotel?",
+                "What time does the check-in start?",
+                "I need directions to the airport",
+                "Is there a shuttle service available?",
+                "Could you help me with my luggage?",
+                "What's the weather like today?",
+                "I'd like to make a dinner reservation",
+                "Could you call a taxi for me?",
+                "Where can I find the nearest pharmacy?",
+                "I need to exchange some currency",
+                "What time does the museum close?",
+                "Could you suggest some local attractions?",
+                "I'm looking for a good restaurant",
+                "How far is it from here to downtown?",
+                "I need to buy a metro card",
+                "Could you take a photo of us?"
+            ]
+        };
+
+        // Sample search results
+        const sampleResults = {
+            "How are you doing?": [
+                {
+                    text: "How are you doing today?",
+                    source: "Friends S01E02",
+                    timestamp: "00:03:15",
+                    similarity: 95
+                },
+                {
+                    text: "Hey, how are you doing?",
+                    source: "The Office S02E08",
+                    timestamp: "00:12:30",
+                    similarity: 92
+                },
+                {
+                    text: "How's everything going?",
+                    source: "Modern Family S03E12",
+                    timestamp: "00:08:45",
+                    similarity: 78
+                }
+            ],
+            "I'd like to make a reservation": [
+                {
+                    text: "I'd like to make a reservation for two",
+                    source: "Pretty Woman",
+                    timestamp: "01:23:45",
+                    similarity: 98
+                },
+                {
+                    text: "I need to make a dinner reservation",
+                    source: "Friends S05E14",
+                    timestamp: "00:15:20",
+                    similarity: 85
+                }
+            ]
+        };
+
+        // Input method switching
+        function switchInputMethod(method) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Show/hide input sections
+            document.querySelectorAll('.input-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            if (method === 'bulk') {
+                document.getElementById('bulkInput').classList.add('active');
+            } else {
+                document.getElementById('individualInput').classList.add('active');
+            }
+        }
+
+        // Individual sentence input management
+        function addSentenceInput() {
+            const builder = document.getElementById('sentenceBuilder');
+            const currentCount = builder.children.length;
+            
+            if (currentCount >= 20) {
+                alert('최대 20개 문장까지 입력 가능합니다.');
+                return;
+            }
+
+            const newRow = document.createElement('div');
+            newRow.className = 'sentence-input-row';
+            newRow.innerHTML = `
+                <div class="sentence-number">${currentCount + 1}</div>
+                <input type="text" class="sentence-input" placeholder="검색할 문장을 입력하세요...">
+                <button class="remove-sentence" onclick="removeSentence(this)">×</button>
+            `;
+            
+            builder.appendChild(newRow);
+        }
+
+        function removeSentence(button) {
+            const builder = document.getElementById('sentenceBuilder');
+            if (builder.children.length <= 1) {
+                alert('최소 1개 문장은 있어야 합니다.');
+                return;
+            }
+            
+            button.closest('.sentence-input-row').remove();
+            updateSentenceNumbers();
+        }
+
+        function updateSentenceNumbers() {
+            const rows = document.querySelectorAll('.sentence-input-row');
+            rows.forEach((row, index) => {
+                row.querySelector('.sentence-number').textContent = index + 1;
+            });
+        }
+
+        // Template loading
+        function loadTemplate(templateName) {
+            if (templates[templateName]) {
+                const textarea = document.getElementById('bulkTextarea');
+                textarea.value = templates[templateName].join('\n');
+                
+                // Switch to bulk input method
+                switchInputMethod('bulk');
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                document.querySelectorAll('.tab-btn')[1].classList.remove('active');
+                
+                alert(`${templateName.toUpperCase()} 템플릿이 로드되었습니다! (${templates[templateName].length}개 문장)`);
+            }
+        }
+
+        // Sample loading
+        function loadSample(element) {
+            const textarea = document.getElementById('bulkTextarea');
+            const currentText = textarea.value.trim();
+            const newText = element.textContent;
+            
+            if (currentText) {
+                textarea.value = currentText + '\n' + newText;
+            } else {
+                textarea.value = newText;
+            }
+        }
+
+        // Main search function
+        function performBatchSearch() {
+            if (isSearching) return;
+            
+            // Get queries from active input method
+            const queries = getQueries();
+            
+            if (queries.length === 0) {
+                alert('검색할 문장을 입력해주세요.');
+                return;
+            }
+            
+            if (queries.length > 20) {
+                alert('최대 20개 문장까지 한 번에 검색 가능합니다.');
+                return;
+            }
+            
+            currentQueries = queries;
+            isSearching = true;
+            
+            // Update UI
+            document.getElementById('searchBtn').disabled = true;
+            showSearchProgress();
+            
+            // Start batch search simulation
+            simulateBatchSearch();
+        }
+
+        function getQueries() {
+            const activeMethod = document.querySelector('.input-section.active').id;
+            
+            if (activeMethod === 'bulkInput') {
+                const text = document.getElementById('bulkTextarea').value.trim();
+                return text.split('\n').filter(line => line.trim().length > 0);
+            } else {
+                const inputs = document.querySelectorAll('#individualInput .sentence-input');
+                return Array.from(inputs)
+                    .map(input => input.value.trim())
+                    .filter(text => text.length > 0);
+            }
+        }
+
+        function showSearchProgress() {
+            const progressDiv = document.getElementById('searchProgress');
+            const progressItems = document.getElementById('progressItems');
+            
+            progressDiv.style.display = 'block';
+            
+            // Clear previous progress items
+            progressItems.innerHTML = '';
+            
+            // Create progress items for each query
+            currentQueries.forEach((query, index) => {
+                const item = document.createElement('div');
+                item.className = 'progress-item';
+                item.innerHTML = `
+                    <div class="progress-status pending" id="status-${index}">⏳</div>
+                    <div>${index + 1}. ${query.length > 50 ? query.substring(0, 50) + '...' : query}</div>
+                `;
+                progressItems.appendChild(item);
+            });
+        }
+
+        function simulateBatchSearch() {
+            let completed = 0;
+            const total = currentQueries.length;
+            
+            // Update overall progress
+            document.getElementById('progressStats').textContent = `${completed} / ${total} 완료`;
+            
+            // Process each query with delay
+            currentQueries.forEach((query, index) => {
+                setTimeout(() => {
+                    // Update individual progress status
+                    const statusEl = document.getElementById(`status-${index}`);
+                    statusEl.className = 'progress-status searching';
+                    statusEl.textContent = '🔍';
+                    
+                    // Simulate search completion after random delay
+                    setTimeout(() => {
+                        completed++;
+                        const hasResults = Math.random() > 0.2; // 80% chance of finding results
+                        
+                        statusEl.className = hasResults ? 'progress-status found' : 'progress-status not-found';
+                        statusEl.textContent = hasResults ? '✓' : '✗';
+                        
+                        // Update overall progress
+                        document.getElementById('progressStats').textContent = `${completed} / ${total} 완료`;
+                        document.getElementById('progressFill').style.width = (completed / total * 100) + '%';
+                        
+                        // If all completed, show results
+                        if (completed === total) {
+                            setTimeout(() => {
+                                hideSearchProgress();
+                                displaySearchResults();
+                                isSearching = false;
+                                document.getElementById('searchBtn').disabled = false;
+                            }, 1000);
+                        }
+                    }, Math.random() * 1500 + 500); // Random delay between 0.5-2 seconds
+                    
+                }, index * 200); // Stagger start times
+            });
+        }
+
+        function hideSearchProgress() {
+            document.getElementById('searchProgress').style.display = 'none';
+        }
+
+        function displaySearchResults() {
+            const container = document.getElementById('searchResultsContainer');
+            const resultsCount = document.getElementById('resultsCount');
+            
+            // Generate mock results
+            const results = generateMockResults();
+            searchResults = results;
+            
+            const totalMatches = results.reduce((sum, result) => sum + result.matches.length, 0);
+            const foundQueries = results.filter(result => result.matches.length > 0).length;
+            
+            resultsCount.textContent = `🎯 ${foundQueries}/${currentQueries.length}개 문장 매칭, 총 ${totalMatches}개 결과 발견`;
+            
+            container.innerHTML = '';
+            
+            results.forEach((result, index) => {
+                const resultElement = createResultElement(result, index);
+                container.appendChild(resultElement);
+            });
+        }
+
+        function generateMockResults() {
+            return currentQueries.map((query, index) => {
+                const hasResults = Math.random() > 0.2; // 80% chance of results
+                const matchCount = hasResults ? Math.floor(Math.random() * 8) + 1 : 0;
+                
+                const matches = [];
+                if (hasResults) {
+                    for (let i = 0; i < matchCount; i++) {
+                        matches.push({
+                            text: generateSimilarSentence(query),
+                            source: getRandomSource(),
+                            timestamp: getRandomTimestamp(),
+                            similarity: Math.floor(Math.random() * 30) + 70 // 70-100% similarity
+                        });
+                    }
+                    
+                    // Sort by similarity
+                    matches.sort((a, b) => b.similarity - a.similarity);
+                }
+                
+                return {
+                    query: query,
+                    queryIndex: index + 1,
+                    matches: matches,
+                    found: hasResults
+                };
+            });
+        }
+
+        function generateSimilarSentence(original) {
+            // Simple mock function to generate similar sentences
+            const variations = [
+                original, // Exact match
+                original.replace('you', 'you guys'),
+                original.replace(/\?$/, ' please?'),
+                original.replace(/^I/, 'I really'),
+                original + ' right now',
+                original.replace('can', 'could'),
+                original.replace('will', 'would')
+            ];
+            
+            return variations[Math.floor(Math.random() * variations.length)];
+        }
+
+        function getRandomSource() {
+            const sources = [
+                'Friends S01E02', 'Friends S03E15', 'Friends S05E08',
+                'The Office S02E12', 'The Office S04E07',
+                'Pretty Woman', 'When Harry Met Sally', 'The Notebook',
+                'Modern Family S01E05', 'How I Met Your Mother S02E18',
+                'The Big Bang Theory S03E22'
+            ];
+            return sources[Math.floor(Math.random() * sources.length)];
+        }
+
+        function getRandomTimestamp() {
+            const hour = Math.floor(Math.random() * 2);
+            const minute = Math.floor(Math.random() * 60);
+            const second = Math.floor(Math.random() * 60);
+            return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:${second.toString().padStart(2, '0')}`;
+        }
+
+        function createResultElement(result, index) {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result-item ${result.found ? 'found' : 'not-found'}`;
+            resultDiv.style.animationDelay = (index * 0.1) + 's';
+            
+            const matchesHtml = result.matches.length > 0 ? 
+                `<div class="matches">
+                    ${result.matches.map(match => `
+                        <div class="match-item">
+                            <div class="match-text">
+                                ${highlightMatch(match.text, result.query)}
+                            </div>
+                            <div class="match-meta">
+                                <div class="match-source">
+                                    <span>🎬</span>
+                                    <span>${match.source}</span>
+                                    <span>•</span>
+                                    <span>${match.timestamp}</span>
+                                    <span>•</span>
+                                    <span>${match.similarity}% 유사도</span>
+                                </div>
+                                <div class="match-actions">
+                                    <button class="match-action" onclick="playAudio('${match.source}', '${match.timestamp}')">🔊</button>
+                                    <button class="match-action" onclick="addToFavorites('${match.text}')">⭐</button>
+                                    <button class="match-action" onclick="practiceThis('${match.text}')">🎯</button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>` : 
+                '<div style="text-align: center; padding: 20px; color: #666;">매칭되는 문장을 찾을 수 없습니다. 검색어를 수정해보세요.</div>';
+            
+            resultDiv.innerHTML = `
+                <div class="result-header">
+                    <div class="query-number">${result.queryIndex}</div>
+                    <div class="query-text">${result.query}</div>
+                    <div class="result-status ${result.found ? 'found' : 'not-found'}">
+                        ${result.found ? `${result.matches.length}개 발견` : '결과 없음'}
+                    </div>
+                </div>
+                ${matchesHtml}
+            `;
+            
+            return resultDiv;
+        }
+
+        function highlightMatch(text, query) {
+            // Simple highlighting function
+            const words = query.toLowerCase().split(' ');
+            let highlighted = text;
+            
+            words.forEach(word => {
+                if (word.length > 2) { // Only highlight words longer than 2 characters
+                    const regex = new RegExp(`(${word})`, 'gi');
+                    highlighted = highlighted.replace(regex, '<span class="match-highlight">$1</span>');
+                }
+            });
+            
+            return highlighted;
+        }
+
+        function clearAll() {
+            // Clear input fields
+            document.getElementById('bulkTextarea').value = '';
+            
+            // Reset individual inputs
+            const builder = document.getElementById('sentenceBuilder');
+            builder.innerHTML = `
+                <div class="sentence-input-row">
+                    <div class="sentence-number">1</div>
+                    <input type="text" class="sentence-input" placeholder="검색할 문장을 입력하세요...">
+                    <button class="remove-sentence" onclick="removeSentence(this)">×</button>
+                </div>
+            `;
+            
+            // Reset results
+            document.getElementById('searchResultsContainer').innerHTML = `
+                <div class="empty-state">
+                    <h3>🚀 배치 검색을 시작해보세요</h3>
+                    <p>여러 문장을 한 번에 입력하면 270K+ 자막 데이터베이스에서 동시에 검색합니다.</p>
+                    <p>정확한 매칭부터 유사한 표현까지 모두 찾아드립니다.</p>
+                    
+                    <div class="sample-queries">
+                        <h4>📝 샘플 검색 문장들:</h4>
+                        <div class="sample-query" onclick="loadSample(this)">How are you doing today?</div>
+                        <div class="sample-query" onclick="loadSample(this)">I'd like to make a reservation for two</div>
+                        <div class="sample-query" onclick="loadSample(this)">What time does the meeting start?</div>
+                        <div class="sample-query" onclick="loadSample(this)">Could you please help me with this?</div>
+                        <div class="sample-query" onclick="loadSample(this)">I'm really looking forward to it</div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('resultsCount').textContent = '검색 결과를 기다리는 중...';
+            
+            // Reset variables
+            currentQueries = [];
+            searchResults = [];
+        }
+
+        // Action functions
+        function exportResults() {
+            if (searchResults.length === 0) {
+                alert('먼저 검색을 수행해주세요.');
+                return;
+            }
+            
+            alert('검색 결과를 CSV, JSON, Excel 형태로 내보내기 중...');
+        }
+
+        function saveResults() {
+            if (searchResults.length === 0) {
+                alert('먼저 검색을 수행해주세요.');
+                return;
+            }
+            
+            alert('검색 결과가 저장되었습니다! 나중에 다시 불러올 수 있습니다.');
+        }
+
+        function createLearningSet() {
+            if (searchResults.length === 0) {
+                alert('먼저 검색을 수행해주세요.');
+                return;
+            }
+            
+            const totalMatches = searchResults.reduce((sum, result) => sum + result.matches.length, 0);
+            alert(`${totalMatches}개 문장으로 맞춤형 학습 세트를 생성합니다! 쉐도윙 연습용으로 최적화됩니다.`);
+        }
+
+        function playAudio(source, timestamp) {
+            alert(`🔊 ${source} ${timestamp} 구간의 오디오를 재생합니다.`);
+        }
+
+        function addToFavorites(sentence) {
+            alert(`⭐ "${sentence}"을 즐겨찾기에 추가했습니다!`);
+        }
+
+        function practiceThis(sentence) {
+            alert(`🎯 "${sentence}" 문장으로 쉐도윙 연습을 시작합니다!`);
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add some sample sentences for demonstration
+            setTimeout(() => {
+                const textarea = document.getElementById('bulkTextarea');
+                textarea.value = `How are you doing today?
+I'd like to make a reservation for two
+What time does the meeting start?
+Could you please help me with this?
+I'm really looking forward to it`;
+            }, 500);
+        });
+    </script>
+</body>
+</html>

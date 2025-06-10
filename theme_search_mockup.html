@@ -1,0 +1,2077 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Theme Search - 테마별 다중 문장 검색 시스템</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #0f0f23;
+            min-height: 100vh;
+            color: #ececf1;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 스크롤바 숨기기 */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+        
+        * {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background: #0f0f23;
+            transition: all 0.3s ease;
+        }
+
+        /* ChatGPT Style Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #171717;
+            color: #ececf1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #2d2d2d;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .sidebar.collapsed {
+            width: 0;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid #2d2d2d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-toggle {
+            background: transparent;
+            border: 1px solid #2d2d2d;
+            color: #ececf1;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sidebar-toggle:hover {
+            background: #2d2d2d;
+        }
+
+        .new-chat-btn {
+            flex: 1;
+            background: transparent;
+            border: 1px solid #2d2d2d;
+            color: #ececf1;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            margin-right: 8px;
+        }
+
+        .new-chat-btn:hover {
+            background: #2d2d2d;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            max-height: calc(100vh - 80px);
+        }
+
+        .search-history {
+            margin-bottom: 24px;
+        }
+        
+        .search-history:last-child {
+            margin-bottom: 0;
+        }
+
+        .search-history h3 {
+            font-size: 0.8rem;
+            color: #8e8ea0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .history-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 2px;
+            font-size: 0.9rem;
+            line-height: 1.3;
+            color: #e5e5e5;
+        }
+
+        .history-item:hover {
+            background: #2d2d2d;
+        }
+
+        .history-item.active {
+            background: #343541;
+        }
+
+        /* Main Content Area */
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .main-header {
+            background: white;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 60px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .mobile-sidebar-toggle {
+            background: transparent;
+            border: 1px solid #e5e5e5;
+            color: #333;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+
+        .mobile-sidebar-toggle:hover {
+            background: #f5f5f5;
+        }
+
+        .header-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .stat-badge {
+            background: #f0f0f0;
+            padding: 4px 8px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #333;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        /* Search Input Section - Main page style */
+        .search-input-section {
+            background: white;
+            padding: 40px 30px 30px 30px;
+            border-bottom: 1px solid #e5e5e5;
+            flex-shrink: 0;
+        }
+
+
+
+        /* Search Input Area - Updated for main page only */
+        .search-input-area {
+            background: white;
+            padding: 40px 30px;
+            color: #333;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .search-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .search-section h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-align: center;
+            color: #333;
+        }
+
+        .search-description {
+            text-align: center;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            opacity: 0.8;
+            line-height: 1.5;
+            color: #666;
+        }
+
+        .batch-input-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid #e5e5e5;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .batch-text-input {
+            width: 100%;
+            min-height: 160px;
+            padding: 15px;
+            border: 1px solid #e5e5e5;
+            border-radius: 10px;
+            background: white;
+            color: #333;
+            font-size: 1rem;
+            line-height: 1.5;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+
+        .batch-text-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 1px #007bff;
+        }
+
+        .batch-text-input::placeholder {
+            color: #999;
+            font-style: italic;
+        }
+
+        .search-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .option-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .option-label {
+            font-size: 0.9rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .option-select {
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: #333;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .option-select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .search-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .search-btn {
+            background: #007bff;
+            color: white;
+            border: 1px solid #007bff;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .search-btn:hover {
+            background: #0056b3;
+            border-color: #0056b3;
+        }
+
+        .search-btn.secondary {
+            background: transparent;
+            color: #666;
+            border-color: #e5e5e5;
+        }
+
+        .search-btn.secondary:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        /* Search Results - Updated for unified layout */
+        .search-results {
+            background: white;
+            padding: 0 30px 30px 30px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 20px 0 15px 0;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .results-count {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .view-toggle {
+            display: flex;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 4px;
+        }
+
+        .view-btn {
+            background: none;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .view-btn.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .theme-group {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .theme-group:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.15);
+        }
+
+        .theme-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .theme-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .theme-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .theme-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .action-btn:hover {
+            background: #e9ecef;
+            border-color: #ccc;
+        }
+
+        .action-btn.primary {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .action-btn.primary:hover {
+            background: #5a6fd8;
+        }
+
+        .sentences-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .sentence-item {
+            background: #f8f9ff;
+            border: 1px solid #e8e8ff;
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .sentence-item:hover {
+            background: #f0f0ff;
+            border-color: #667eea;
+        }
+
+        .sentence-english {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .sentence-korean {
+            font-size: 0.9rem;
+            color: #666;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+
+        .sentence-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .sentence-source {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .sentence-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .sentence-action {
+            background: none;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+        }
+
+        .sentence-action:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        /* Right Sidebar - Theme Board (hidden for ChatGPT style) */
+        .theme-board {
+            display: none;
+        }
+
+        .theme-board h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .saved-themes {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .saved-theme {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .saved-theme:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .saved-theme.active {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .saved-theme-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .saved-theme-meta {
+            font-size: 0.8rem;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .quick-themes {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .quick-themes h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .quick-theme {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .quick-theme:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Batch Search Results Styles */
+        .search-summary {
+            background: #2d2d2d;
+            color: #ececf1;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid #343541;
+        }
+
+        .search-summary h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #ececf1;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .summary-stats .stat-item {
+            background: #343541;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #40414f;
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            opacity: 0.8;
+            color: #8e8ea0;
+        }
+
+        .stat-value {
+            display: block;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #ececf1;
+        }
+
+        .sentence-group {
+            background: #2d2d2d;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #343541;
+            transition: all 0.3s ease;
+        }
+
+        .sentence-group:hover {
+            border-color: #10a37f;
+        }
+
+        .sentence-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #343541;
+        }
+
+        .sentence-header h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+            flex: 1;
+            margin-right: 15px;
+        }
+
+        .result-count {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .sentence-results {
+            display: grid;
+            gap: 12px;
+        }
+
+        .result-card {
+            background: #f8f9ff;
+            border: 1px solid #e8e8ff;
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .result-card:hover {
+            background: #f0f0ff;
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+
+        .movie-title {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .episode-info {
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        .timestamp {
+            color: #888;
+            font-family: monospace;
+        }
+
+        .confidence {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .result-content {
+            margin: 10px 0;
+        }
+
+        .subtitle-text {
+            font-size: 1rem;
+            color: #333;
+            line-height: 1.5;
+            margin: 0;
+            font-style: italic;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .result-actions .action-btn {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .result-actions .action-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .result-actions .action-btn.play:hover {
+            background: #28a745;
+            border-color: #28a745;
+        }
+
+        .result-actions .action-btn.clip:hover {
+            background: #ffc107;
+            border-color: #ffc107;
+            color: #333;
+        }
+
+        .result-actions .action-btn.save:hover {
+            background: #17a2b8;
+            border-color: #17a2b8;
+        }
+
+        /* Loading and Empty States */
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #8e8ea0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #8e8ea0;
+        }
+
+        .empty-state h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #ececf1;
+        }
+
+        /* Progress Indicators */
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #f0f0f0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 220px;
+            }
+            
+            .search-input-area {
+                padding: 30px 20px;
+            }
+            
+            .search-input-section {
+                padding: 30px 20px 20px 20px;
+            }
+            
+            .search-options {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+            
+            .search-actions {
+                justify-content: center;
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                z-index: 1000;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar:not(.collapsed) {
+                transform: translateX(0);
+            }
+            
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+            }
+            
+            .mobile-sidebar-toggle {
+                display: flex;
+            }
+            
+            .main-area {
+                width: 100%;
+            }
+            
+            .search-input-area {
+                padding: 20px 15px;
+            }
+            
+            .search-input-section {
+                padding: 20px 15px 15px 15px;
+            }
+            
+            .search-section h2 {
+                font-size: 1.5rem;
+            }
+            
+            .search-description {
+                font-size: 1rem;
+            }
+            
+            .batch-input-section {
+                padding: 20px;
+            }
+            
+            .batch-text-input {
+                min-height: 120px;
+                font-size: 0.9rem;
+            }
+            
+            .search-actions {
+                flex-direction: column;
+            }
+            
+            .search-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .header-stats {
+                display: none;
+            }
+            
+            .search-results {
+                padding: 15px;
+            }
+            
+            /* Sidebar Overlay for Mobile */
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+            }
+            
+            .sidebar-overlay.active {
+                opacity: 1;
+                visibility: visible;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .theme-group {
+            animation: fadeInUp 0.6s ease;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .search-btn:active {
+            animation: pulse 0.3s ease;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- ChatGPT Style Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <button class="new-chat-btn" onclick="startNewSearch()">
+                    <span>➕</span>
+                    <span>새 테마 검색</span>
+                </button>
+            </div>
+            
+            <div class="sidebar-content">
+                <div class="search-history">
+                    <h3>최근 검색</h3>
+                    <div class="history-item active" onclick="loadHistoryItem('💕 사랑과 관계 표현', 15)">
+                        💕 사랑과 관계 표현 (15개 문장)
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('💼 비즈니스 미팅 영어', 12)">
+                        💼 비즈니스 미팅 영어 (12개 문장)
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('☕ 일상 대화 표현', 18)">
+                        ☕ 일상 대화 표현 (18개 문장)
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('😊 감정 표현하기', 20)">
+                        😊 감정 표현하기 (20개 문장)
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('🍕 음식 관련 표현', 16)">
+                        🍕 음식 관련 표현 (16개 문장)
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('✈️ 여행 영어 표현', 22)">
+                        ✈️ 여행 영어 표현 (22개 문장)
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('🎓 학교생활 표현', 14)">
+                        🎓 학교생활 표현 (14개 문장)
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('💪 운동과 건강', 19)">
+                        💪 운동과 건강 (19개 문장)
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('🎬 영화 리뷰 표현', 17)">
+                        🎬 영화 리뷰 표현 (17개 문장)
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('🛍️ 쇼핑 영어', 13)">
+                        🛍️ 쇼핑 영어 (13개 문장)
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('🏠 집안일 표현', 11)">
+                        🏠 집안일 표현 (11개 문장)
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('🚗 교통과 운전', 15)">
+                        🚗 교통과 운전 (15개 문장)
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('📱 기술과 SNS', 21)">
+                        📱 기술과 SNS (21개 문장)
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('🎵 음악과 취미', 18)">
+                        🎵 음악과 취미 (18개 문장)
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('🌅 날씨와 계절', 12)">
+                        🌅 날씨와 계절 (12개 문장)
+                    </div>
+                </div>
+                
+                <div class="search-history">
+                    <h3>즐겨찾기</h3>
+                    <div class="history-item" onclick="loadHistoryItem('⭐ TOEIC 필수 표현', 45)">
+                        ⭐ TOEIC 필수 표현
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('⭐ 면접 영어 표현', 32)">
+                        ⭐ 면접 영어 표현
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('⭐ 친구와의 대화', 28)">
+                        ⭐ 친구와의 대화
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('⭐ 프레젠테이션 영어', 36)">
+                        ⭐ 프레젠테이션 영어
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('⭐ 이메일 작성법', 24)">
+                        ⭐ 이메일 작성법
+                    </div>
+                    <div class="history-item" onclick="loadHistoryItem('⭐ 전화 영어', 19)">
+                        ⭐ 전화 영어
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Area -->
+        <div class="main-area">
+            <div class="main-header">
+                <div class="header-left">
+                    <button class="mobile-sidebar-toggle" onclick="toggleSidebar()" id="sidebarToggle">
+                        <span>☰</span>
+                    </button>
+                    <div class="header-title">
+                        🎯 Theme Search
+                        <span style="font-size: 0.8rem; color: #666;">테마별 다중 문장 검색</span>
+                    </div>
+                </div>
+                <div class="header-stats">
+                    <div class="stat-badge">
+                        <span>📊</span>
+                        <span>270K+ 문장</span>
+                    </div>
+                    <div class="stat-badge">
+                        <span>🎬</span>
+                        <span>7개 미디어</span>
+                    </div>
+                    <div class="stat-badge">
+                        <span>⚡</span>
+                        <span>AI 추천</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <!-- Search Input Section Only -->
+                <div class="search-input-section">
+                    <div class="search-container">
+                        <div class="search-section">
+                            <h2>🎯 배치 문장 검색</h2>
+                            <p class="search-description">여러 개의 영어 문장을 한 번에 입력하여 관련된 미디어 콘텐츠를 찾아보세요.</p>
+                            
+                            <div class="batch-input-section">
+                                <label for="batchTextInput" class="input-label">
+                                    📝 영어 문장들 입력 (한 줄에 하나씩)
+                                </label>
+                                <textarea 
+                                    id="batchTextInput" 
+                                    class="batch-text-input" 
+                                    placeholder="I love you so much.
+You make me happy.
+How are you doing today?
+Can you help me with this?
+What do you think about it?
+
+(영어 문장을 여러 줄로 입력하세요. 대문자로 시작하고 마침표로 끝나는 문장을 자동으로 추출합니다.)"
+                                    rows="6"></textarea>
+                                
+                                <div class="search-options">
+                                    <div class="option-group">
+                                        <label for="resultsPerSentence" class="option-label">문장당 결과 수:</label>
+                                        <select id="resultsPerSentence" class="option-select">
+                                            <option value="3">3개</option>
+                                            <option value="5" selected>5개</option>
+                                            <option value="10">10개</option>
+                                            <option value="20">20개</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="search-actions">
+                                        <button class="search-btn secondary" onclick="document.getElementById('batchTextInput').value = ''">
+                                            🗑️ 초기화
+                                        </button>
+                                        <button class="search-btn primary" onclick="performBatchSearch()">
+                                            🔍 배치 검색 시작
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div id="searchProgress" class="progress-bar" style="display: none;">
+                                    <div class="progress-fill"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 배치 다중 문장 검색 기능
+        function extractEnglishSentences(text) {
+            // 한글, 한자, 일본어 문자 제거 (유니코드 범위)
+            const koreanRegex = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF]/g;
+            
+            // 1단계: 한글/중국어/일본어 문자가 포함된 줄 제거
+            const lines = text.split('\n').filter(line => {
+                const cleanLine = line.trim();
+                return cleanLine.length > 0 && !koreanRegex.test(cleanLine);
+            });
+            
+            // 2단계: 영어 문장 추출 (대문자로 시작하고 .?!로 끝나는 문장)
+            const sentences = [];
+            const sentenceRegex = /[A-Z][^.!?]*[.!?]/g;
+            
+            lines.forEach(line => {
+                const matches = line.match(sentenceRegex);
+                if (matches) {
+                    matches.forEach(sentence => {
+                        const trimmed = sentence.trim();
+                        // 최소 길이 체크 (너무 짧은 문장 제외)
+                        if (trimmed.length >= 10 && trimmed.split(' ').length >= 3) {
+                            sentences.push(trimmed);
+                        }
+                    });
+                }
+            });
+            
+            return sentences;
+        }
+
+        function simulateBatchSearch(sentences, resultsPerSentence) {
+            const allResults = [];
+            let totalFound = 0;
+            
+            sentences.forEach((sentence, index) => {
+                // 실제 데이터베이스 검색 시뮬레이션
+                const mockResults = generateMockSearchResults(sentence, resultsPerSentence);
+                totalFound += mockResults.length;
+                
+                allResults.push({
+                    searchSentence: sentence,
+                    sentenceIndex: index + 1,
+                    results: mockResults,
+                    found: mockResults.length
+                });
+            });
+            
+            return {
+                searchedSentences: sentences.length,
+                totalResults: totalFound,
+                avgPerSentence: (totalFound / sentences.length).toFixed(1),
+                results: allResults
+            };
+        }
+
+        function generateMockSearchResults(sentence, count) {
+            const mockData = [
+                { movie: "The Office", season: 3, episode: 14, time: "12:34", context: sentence, confidence: 0.95 },
+                { movie: "Friends", season: 10, episode: 2, time: "08:22", context: sentence, confidence: 0.89 },
+                { movie: "Breaking Bad", season: 2, episode: 7, time: "35:18", context: sentence, confidence: 0.84 },
+                { movie: "Stranger Things", season: 1, episode: 4, time: "22:45", context: sentence, confidence: 0.78 },
+                { movie: "The Crown", season: 4, episode: 8, time: "41:12", context: sentence, confidence: 0.72 },
+                { movie: "Sherlock", season: 2, episode: 1, time: "15:30", context: sentence, confidence: 0.69 },
+                { movie: "House of Cards", season: 3, episode: 5, time: "28:56", context: sentence, confidence: 0.65 },
+                { movie: "Black Mirror", season: 4, episode: 6, time: "33:21", context: sentence, confidence: 0.61 },
+                { movie: "Westworld", season: 1, episode: 9, time: "45:18", context: sentence, confidence: 0.58 },
+                { movie: "Game of Thrones", season: 7, episode: 3, time: "52:14", context: sentence, confidence: 0.54 }
+            ];
+            
+            return mockData.slice(0, Math.min(count, mockData.length));
+        }
+
+        function performBatchSearch() {
+            const batchText = document.getElementById('batchTextInput').value.trim();
+            const resultsPerSentence = parseInt(document.getElementById('resultsPerSentence').value);
+            
+            if (!batchText) {
+                alert('다중 문장을 입력해주세요.');
+                return;
+            }
+            
+            // 로딩 표시
+            showSearchProgress();
+            
+            // 실제 API 호출
+            fetch('/api/batch-search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    text: batchText,
+                    results_per_sentence: resultsPerSentence
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 검색 히스토리에 추가
+                    addToSearchHistory(data.extracted_sentences, data.search_summary.total_results);
+                    
+                    // 새 페이지로 결과 전달
+                    redirectToResults(data);
+                } else {
+                    alert(data.error || '검색 중 오류가 발생했습니다.');
+                    // 백업으로 시뮬레이션 실행
+                    performBatchSearchSimulation();
+                }
+                hideSearchProgress();
+            })
+            .catch(error => {
+                console.error('API 호출 오류:', error);
+                // ChatGPT처럼 시뮬레이션으로 바로 이동
+                performBatchSearchSimulation();
+                hideSearchProgress();
+            });
+        }
+
+        function performBatchSearchSimulation() {
+            const batchText = document.getElementById('batchTextInput').value.trim();
+            const resultsPerSentence = parseInt(document.getElementById('resultsPerSentence').value);
+            
+            // 영어 문장 추출
+            const englishSentences = extractEnglishSentences(batchText);
+            
+            if (englishSentences.length === 0) {
+                alert('영어 문장을 찾을 수 없습니다. 대문자로 시작하고 마침표로 끝나는 문장을 입력해주세요.');
+                return;
+            }
+            
+            // 배치 검색 실행 (시뮬레이션)
+            const searchResults = simulateBatchSearch(englishSentences, resultsPerSentence);
+            
+            // 검색 히스토리에 추가
+            addToSearchHistory(englishSentences, searchResults.totalResults);
+            
+            // 결과 데이터 생성
+            const resultsData = {
+                success: true,
+                extracted_sentences: englishSentences,
+                search_summary: {
+                    total_sentences: searchResults.searchedSentences,
+                    total_results: searchResults.totalResults,
+                    average_per_sentence: searchResults.avgPerSentence,
+                    search_time: 1.2
+                },
+                sentence_results: searchResults.results.map(r => ({
+                    sentence_index: r.sentenceIndex,
+                    search_sentence: r.searchSentence,
+                    found_count: r.found,
+                    results: r.results.map(result => ({
+                        media_name: result.movie,
+                        subtitle_text: result.context,
+                        timestamp: result.time,
+                        confidence: result.confidence,
+                        file_path: `/${result.movie.toLowerCase().replace(' ', '_')}/s${result.season}e${result.episode}.srt`
+                    }))
+                }))
+            };
+            
+            // 새 페이지로 결과 전달
+            redirectToResults(resultsData);
+        }
+
+        function addToSearchHistory(sentences, totalResults) {
+            const historyItem = {
+                timestamp: new Date().toLocaleString('ko-KR'),
+                sentences: sentences,
+                sentenceCount: sentences.length,
+                totalResults: totalResults,
+                type: 'batch'
+            };
+            
+            // 로컬 스토리지에 저장 (실제 구현에서는 백엔드 API 호출)
+            let searchHistory = JSON.parse(localStorage.getItem('batchSearchHistory') || '[]');
+            searchHistory.unshift(historyItem);
+            searchHistory = searchHistory.slice(0, 10); // 최근 10개만 유지
+            localStorage.setItem('batchSearchHistory', JSON.stringify(searchHistory));
+            
+            console.log('검색 히스토리에 추가됨:', historyItem);
+        }
+
+        // 새 검색 시작
+        function startNewSearch() {
+            // 입력 필드 초기화
+            document.getElementById('batchTextInput').value = '';
+            
+            // 사이드바의 활성 항목 제거
+            document.querySelectorAll('.history-item').forEach(item => {
+                item.classList.remove('active');
+            });
+        }
+
+        // 퀵 검색 기능 개선
+        function quickSearch(themeType) {
+            const themeData = {
+                'love': {
+                    title: '💕 사랑과 관계',
+                    sentences: [
+                        'I love you more than words can express.',
+                        'You make me want to be a better person.',
+                        'I can\'t imagine my life without you.',
+                        'You complete me.',
+                        'I\'m crazy about you.'
+                    ]
+                },
+                'business': {
+                    title: '💼 비즈니스 영어',
+                    sentences: [
+                        'Let\'s schedule a meeting to discuss this further.',
+                        'I need the quarterly reports by tomorrow.',
+                        'We should consider all our options.',
+                        'Could you please send me the agenda?',
+                        'I\'d like to propose a new strategy.'
+                    ]
+                },
+                'daily': {
+                    title: '☕ 일상 대화',
+                    sentences: [
+                        'How was your day?',
+                        'What do you want for dinner?',
+                        'I\'m running late for work.',
+                        'The weather is really nice today.',
+                        'Did you watch the news last night?'
+                    ]
+                }
+            };
+            
+            const theme = themeData[themeType];
+            if (!theme) return;
+            
+            // 로딩 표시
+            showSearchProgress();
+            
+            // 시뮬레이션 지연 후 결과 페이지로 이동
+            setTimeout(() => {
+                // 퀵 검색 결과 데이터 생성
+                const mockResults = theme.sentences.map((sentence, index) => ({
+                    sentence_index: index + 1,
+                    search_sentence: sentence,
+                    found_count: 3 + Math.floor(Math.random() * 3),
+                    results: generateMockSearchResults(sentence, 3)
+                }));
+                
+                const resultsData = {
+                    success: true,
+                    extracted_sentences: theme.sentences,
+                    search_summary: {
+                        total_sentences: theme.sentences.length,
+                        total_results: mockResults.reduce((sum, r) => sum + r.found_count, 0),
+                        average_per_sentence: (mockResults.reduce((sum, r) => sum + r.found_count, 0) / theme.sentences.length).toFixed(1),
+                        search_time: 0.8
+                    },
+                    sentence_results: mockResults.map(r => ({
+                        sentence_index: r.sentence_index,
+                        search_sentence: r.search_sentence,
+                        found_count: r.found_count,
+                        results: r.results.map(result => ({
+                            media_name: result.movie,
+                            subtitle_text: result.context,
+                            timestamp: result.time,
+                            confidence: result.confidence,
+                            file_path: `/${result.movie.toLowerCase().replace(' ', '_')}/s${result.season}e${result.episode}.srt`
+                        }))
+                    }))
+                };
+                
+                // 검색 히스토리에 추가
+                addToSearchHistory(theme.sentences, resultsData.search_summary.total_results);
+                
+                // 결과 페이지로 이동
+                redirectToResults(resultsData);
+                hideSearchProgress();
+            }, 1000);
+        }
+
+        // Sample data for demonstration
+        const sampleThemes = {
+            'love-relationship': {
+                title: '💕 사랑과 관계',
+                count: 15,
+                sentences: [
+                    {
+                        english: "I love you more than words can express.",
+                        korean: "말로 표현할 수 없을 만큼 당신을 사랑해요.",
+                        source: "The Notebook",
+                        timestamp: "01:23:45"
+                    },
+                    {
+                        english: "You make me want to be a better person.",
+                        korean: "당신은 나를 더 나은 사람이 되고 싶게 만들어요.",
+                        source: "As Good as It Gets",
+                        timestamp: "02:15:30"
+                    },
+                    {
+                        english: "I can't imagine my life without you.",
+                        korean: "당신 없는 내 인생은 상상할 수 없어요.",
+                        source: "Friends S02E07",
+                        timestamp: "00:18:22"
+                    }
+                ]
+            },
+            'emotions': {
+                title: '😊 감정 표현',
+                count: 20,
+                sentences: [
+                    {
+                        english: "I'm feeling overwhelmed right now.",
+                        korean: "지금 너무 벅차는 기분이에요.",
+                        source: "This Is Us S01E03",
+                        timestamp: "00:25:18"
+                    },
+                    {
+                        english: "That made me incredibly happy.",
+                        korean: "그것이 나를 엄청나게 행복하게 했어요.",
+                        source: "Friends S05E14",
+                        timestamp: "00:12:45"
+                    },
+                    {
+                        english: "I'm really nervous about the presentation.",
+                        korean: "발표 때문에 정말 긴장돼요.",
+                        source: "The Office S03E12",
+                        timestamp: "00:08:33"
+                    }
+                ]
+            }
+        };
+
+        // Search functionality
+        function handleSearchKeyPress(event) {
+            if (event.key === 'Enter') {
+                addSearchTag();
+            }
+        }
+
+        function addSearchTag() {
+            const input = document.getElementById('themeSearch');
+            const tag = input.value.trim();
+            
+            if (tag && !currentSearchTags.includes(tag)) {
+                currentSearchTags.push(tag);
+                input.value = '';
+                updateSearchTags();
+            }
+        }
+
+        function updateSearchTags() {
+            const container = document.getElementById('searchTags');
+            container.innerHTML = '';
+            
+            currentSearchTags.forEach(tag => {
+                const tagElement = document.createElement('div');
+                tagElement.className = 'search-tag';
+                tagElement.innerHTML = `
+                    <span>${tag}</span>
+                    <span class="remove-tag" onclick="removeSearchTag('${tag}')">×</span>
+                `;
+                container.appendChild(tagElement);
+            });
+        }
+
+        function removeSearchTag(tag) {
+            currentSearchTags = currentSearchTags.filter(t => t !== tag);
+            updateSearchTags();
+        }
+
+        function toggleFilter(button, filter) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            button.classList.add('active');
+        }
+
+        function performThemeSearch() {
+            if (isSearching) return;
+            
+            isSearching = true;
+            showSearchProgress();
+            
+            // Simulate API call
+            setTimeout(() => {
+                displaySearchResults();
+                hideSearchProgress();
+                isSearching = false;
+            }, 2000);
+        }
+
+        function showSearchProgress() {
+            const progressBar = document.getElementById('searchProgress');
+            progressBar.style.display = 'block';
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                progressBar.querySelector('.progress-fill').style.width = progress + '%';
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                }
+            }, 200);
+        }
+
+        function hideSearchProgress() {
+            setTimeout(() => {
+                document.getElementById('searchProgress').style.display = 'none';
+                document.querySelector('.progress-fill').style.width = '0%';
+            }, 500);
+        }
+
+        function displaySearchResults() {
+            const container = document.getElementById('searchResultsContainer');
+            const resultsCount = document.getElementById('resultsCount');
+            
+            // Generate results based on search tags
+            const themes = generateThemeResults();
+            currentThemes = themes;
+            
+            resultsCount.textContent = `🎯 ${themes.length}개 테마, 총 ${themes.reduce((sum, theme) => sum + theme.count, 0)}개 문장 발견`;
+            
+            container.innerHTML = '';
+            
+            themes.forEach((theme, index) => {
+                const themeElement = createThemeElement(theme, index);
+                container.appendChild(themeElement);
+            });
+        }
+
+        function generateThemeResults() {
+            // Simulate theme generation based on search tags
+            const themes = [];
+            
+            if (currentSearchTags.includes('love') || currentSearchTags.includes('relationship')) {
+                themes.push({
+                    id: 'love-relationship',
+                    title: '💕 사랑과 관계',
+                    count: 15,
+                    category: 'romance',
+                    difficulty: 'intermediate',
+                    sources: ['Friends', 'The Notebook', 'When Harry Met Sally'],
+                    sentences: generateSampleSentences('love', 15)
+                });
+            }
+            
+            if (currentSearchTags.includes('work') || currentSearchTags.includes('business')) {
+                themes.push({
+                    id: 'business-work',
+                    title: '💼 비즈니스와 업무',
+                    count: 12,
+                    category: 'business',
+                    difficulty: 'advanced',
+                    sources: ['The Office', 'Mad Men', 'Suits'],
+                    sentences: generateSampleSentences('business', 12)
+                });
+            }
+            
+            if (currentSearchTags.includes('friend') || currentSearchTags.includes('friendship')) {
+                themes.push({
+                    id: 'friendship',
+                    title: '👥 우정과 동료',
+                    count: 18,
+                    category: 'friendship',
+                    difficulty: 'intermediate',
+                    sources: ['Friends', 'How I Met Your Mother', 'The Big Bang Theory'],
+                    sentences: generateSampleSentences('friendship', 18)
+                });
+            }
+            
+            // Default themes if no specific tags
+            if (themes.length === 0) {
+                themes.push({
+                    id: 'daily-conversation',
+                    title: '☕ 일상 대화',
+                    count: 20,
+                    category: 'daily',
+                    difficulty: 'beginner',
+                    sources: ['Friends', 'Modern Family', 'The Office'],
+                    sentences: generateSampleSentences('daily', 20)
+                });
+            }
+            
+            return themes;
+        }
+
+        function generateSampleSentences(category, count) {
+            const sentences = {
+                love: [
+                    { english: "I love you more than words can express.", korean: "말로 표현할 수 없을 만큼 당신을 사랑해요.", source: "The Notebook", timestamp: "01:23:45" },
+                    { english: "You make me want to be a better person.", korean: "당신은 나를 더 나은 사람이 되고 싶게 만들어요.", source: "As Good as It Gets", timestamp: "02:15:30" },
+                    { english: "I can't imagine my life without you.", korean: "당신 없는 내 인생은 상상할 수 없어요.", source: "Friends S02E07", timestamp: "00:18:22" }
+                ],
+                business: [
+                    { english: "Let's schedule a meeting to discuss this further.", korean: "이것에 대해 더 논의하기 위해 회의를 잡아봅시다.", source: "The Office S03E05", timestamp: "00:12:30" },
+                    { english: "I need the quarterly reports by tomorrow.", korean: "내일까지 분기 보고서가 필요합니다.", source: "Mad Men S02E08", timestamp: "00:25:15" },
+                    { english: "We should consider all our options.", korean: "모든 선택사항을 고려해야 합니다.", source: "Suits S01E12", timestamp: "00:18:45" }
+                ],
+                friendship: [
+                    { english: "I'll always be there for you.", korean: "언제나 당신 곁에 있을게요.", source: "Friends S01E01", timestamp: "00:22:30" },
+                    { english: "Thanks for being such a great friend.", korean: "이렇게 좋은 친구가 되어줘서 고마워요.", source: "How I Met Your Mother S03E15", timestamp: "00:19:20" },
+                    { english: "We've been through so much together.", korean: "우리는 함께 많은 일을 겪어왔어요.", source: "The Big Bang Theory S05E10", timestamp: "00:14:55" }
+                ],
+                daily: [
+                    { english: "How was your day?", korean: "오늘 하루 어땠어요?", source: "Friends S01E02", timestamp: "00:05:30" },
+                    { english: "What do you want for dinner?", korean: "저녁으로 뭘 드실래요?", source: "Modern Family S02E15", timestamp: "00:08:45" },
+                    { english: "I'm running late for work.", korean: "직장에 늦을 것 같아요.", source: "The Office S01E01", timestamp: "00:03:20" }
+                ]
+            };
+            
+            return sentences[category] || sentences.daily;
+        }
+
+        function createThemeElement(theme, index) {
+            const themeDiv = document.createElement('div');
+            themeDiv.className = 'theme-group';
+            themeDiv.style.animationDelay = (index * 0.1) + 's';
+            
+            themeDiv.innerHTML = `
+                <div class="theme-header">
+                    <div class="theme-title">
+                        ${theme.title}
+                        <span class="tooltip" data-tooltip="AI가 분석한 ${theme.count}개 관련 문장">ℹ️</span>
+                    </div>
+                    <div class="theme-actions">
+                        <button class="action-btn" onclick="saveTheme('${theme.id}')">
+                            <span>💾</span>
+                            <span>저장</span>
+                        </button>
+                        <button class="action-btn" onclick="exportTheme('${theme.id}')">
+                            <span>📤</span>
+                            <span>내보내기</span>
+                        </button>
+                        <button class="action-btn primary" onclick="startLearning('${theme.id}')">
+                            <span>🎯</span>
+                            <span>학습 시작</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="theme-meta">
+                    <div class="meta-item">
+                        <span>📊</span>
+                        <span>${theme.count}개 문장</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>📚</span>
+                        <span>${theme.difficulty}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>🎬</span>
+                        <span>${theme.sources.length}개 소스</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>⏱️</span>
+                        <span>예상 학습시간: ${Math.ceil(theme.count * 2.5)}분</span>
+                    </div>
+                </div>
+                
+                <div class="sentences-grid">
+                    ${theme.sentences.slice(0, 3).map(sentence => `
+                        <div class="sentence-item">
+                            <div class="sentence-english">"${sentence.english}"</div>
+                            <div class="sentence-korean">"${sentence.korean}"</div>
+                            <div class="sentence-meta">
+                                <div class="sentence-source">
+                                    <span>🎬</span>
+                                    <span>${sentence.source}</span>
+                                    <span>•</span>
+                                    <span>${sentence.timestamp}</span>
+                                </div>
+                                <div class="sentence-actions">
+                                    <button class="sentence-action" onclick="playAudio('${sentence.source}', '${sentence.timestamp}')">🔊</button>
+                                    <button class="sentence-action" onclick="addToFavorites('${sentence.english}')">⭐</button>
+                                    <button class="sentence-action" onclick="practiceThis('${sentence.english}')">🎯</button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                    ${theme.count > 3 ? `
+                        <div class="sentence-item" style="text-align: center; color: #667eea; font-weight: 600; cursor: pointer;" onclick="showAllSentences('${theme.id}')">
+                            + ${theme.count - 3}개 문장 더 보기
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            return themeDiv;
+        }
+
+        function clearSearch() {
+            currentSearchTags = [];
+            document.getElementById('themeSearch').value = '';
+            updateSearchTags();
+            
+            // Reset filters
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector('.filter-btn').classList.add('active');
+            
+            // Clear results
+            document.getElementById('searchResultsContainer').innerHTML = `
+                <div class="empty-state">
+                    <h3>🎯 테마 검색을 시작해보세요</h3>
+                    <p>키워드를 입력하면 관련된 10-20개 문장을 테마별로 그룹화해드립니다.</p>
+                    <p>예시: "love", "work", "friendship" 등</p>
+                </div>
+            `;
+            
+            document.getElementById('resultsCount').textContent = '검색 결과를 기다리는 중...';
+        }
+
+        function switchView(viewType) {
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // In a real implementation, this would change the layout
+            console.log('Switching to', viewType, 'view');
+        }
+
+        // Theme Board Functions
+        function loadTheme(themeId) {
+            // Remove active class from all saved themes
+            document.querySelectorAll('.saved-theme').forEach(theme => {
+                theme.classList.remove('active');
+            });
+            
+            // Add active class to clicked theme
+            event.target.closest('.saved-theme').classList.add('active');
+            
+            // Load the theme data
+            if (sampleThemes[themeId]) {
+                const theme = sampleThemes[themeId];
+                currentThemes = [theme];
+                displayLoadedTheme(theme);
+            }
+        }
+
+        function displayLoadedTheme(theme) {
+            const container = document.getElementById('searchResultsContainer');
+            const resultsCount = document.getElementById('resultsCount');
+            
+            resultsCount.textContent = `📋 저장된 테마: ${theme.title} (${theme.count}개 문장)`;
+            
+            container.innerHTML = '';
+            const themeElement = createThemeElement({
+                id: 'loaded-theme',
+                title: theme.title,
+                count: theme.count,
+                category: 'saved',
+                difficulty: 'mixed',
+                sources: ['Multiple Sources'],
+                sentences: theme.sentences
+            }, 0);
+            
+            container.appendChild(themeElement);
+        }
+
+        function quickSearch(themeType) {
+            currentSearchTags = [themeType];
+            updateSearchTags();
+            performThemeSearch();
+        }
+
+        // Action Functions
+        function saveTheme(themeId) {
+            alert(`테마 "${themeId}"가 저장되었습니다!`);
+        }
+
+        function exportTheme(themeId) {
+            alert(`테마 "${themeId}"를 내보내는 중... (CSV, JSON, 학습자료 형태로 가능)`);
+        }
+
+        function startLearning(themeId) {
+            alert(`"${themeId}" 테마로 학습을 시작합니다! 쉐도윙 모드로 전환됩니다.`);
+        }
+
+        function showAllSentences(themeId) {
+            alert(`"${themeId}" 테마의 모든 문장을 보여드립니다.`);
+        }
+
+        function playAudio(source, timestamp) {
+            alert(`🔊 ${source} ${timestamp} 오디오를 재생합니다.`);
+        }
+
+        function addToFavorites(sentence) {
+            alert(`⭐ "${sentence}"를 즐겨찾기에 추가했습니다!`);
+        }
+
+        function practiceThis(sentence) {
+            alert(`🎯 "${sentence}" 문장으로 쉐도윙 연습을 시작합니다!`);
+        }
+
+        // 사이드바 히스토리에 새 항목 추가
+        function addToSidebarHistory(title, sentenceCount) {
+            const historyContainer = document.querySelector('.search-history');
+            const historyItems = historyContainer.querySelectorAll('.history-item');
+            
+            // 기존 활성 항목 제거
+            historyItems.forEach(item => item.classList.remove('active'));
+            
+            // 새 항목 생성
+            const newItem = document.createElement('div');
+            newItem.className = 'history-item active';
+            newItem.textContent = `${title} (${sentenceCount}개 문장)`;
+            newItem.onclick = () => loadHistoryItem(title, sentenceCount);
+            
+            // 첫 번째 위치에 추가 (h3 다음)
+            const h3 = historyContainer.querySelector('h3');
+            h3.insertAdjacentElement('afterend', newItem);
+            
+            // 15개 이상이면 마지막 항목 제거
+            const allItems = historyContainer.querySelectorAll('.history-item');
+            if (allItems.length > 15) {
+                allItems[allItems.length - 1].remove();
+            }
+        }
+        
+        // 히스토리 항목 로드
+        function loadHistoryItem(title, sentenceCount) {
+            // 활성 상태 변경
+            document.querySelectorAll('.history-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 해당 검색 결과 표시 (시뮬레이션)
+            document.getElementById('resultsCount').textContent = `📋 저장된 검색: ${title} (${sentenceCount}개 문장)`;
+            
+            // 간단한 결과 표시
+            document.getElementById('searchResultsContainer').innerHTML = `
+                <div style="text-align: center; padding: 50px; color: #8e8ea0;">
+                    <div style="font-size: 2rem; margin-bottom: 20px;">📁</div>
+                    <h3 style="color: #ececf1; margin-bottom: 15px;">${title}</h3>
+                    <p>총 ${sentenceCount}개의 관련 문장이 저장되어 있습니다.</p>
+                    <p style="margin-top: 20px; opacity: 0.7;">실제 구현에서는 저장된 검색 결과가 표시됩니다.</p>
+                </div>
+            `;
+        }
+
+        // 검색 결과 페이지로 이동
+        function redirectToResults(data) {
+            // 검색 데이터를 URL 파라미터로 전달
+            const searchDataParam = encodeURIComponent(JSON.stringify(data));
+            window.location.href = `search_results.html?data=${searchDataParam}`;
+        }
+
+        // 사이드바 토글 기능
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            
+            sidebar.classList.toggle('collapsed');
+            
+            // 모바일에서는 오버레이 추가/제거
+            if (window.innerWidth <= 768) {
+                if (!sidebar.classList.contains('collapsed')) {
+                    // 오버레이 추가
+                    const overlay = document.createElement('div');
+                    overlay.className = 'sidebar-overlay';
+                    overlay.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.5);
+                        z-index: 999;
+                        opacity: 0;
+                        transition: opacity 0.3s ease;
+                    `;
+                    document.body.appendChild(overlay);
+                    
+                    // 오버레이 클릭 시 사이드바 닫기
+                    overlay.onclick = toggleSidebar;
+                    
+                    // 애니메이션을 위해 약간의 지연
+                    setTimeout(() => {
+                        overlay.style.opacity = '1';
+                    }, 10);
+                } else {
+                    // 오버레이 제거
+                    const overlay = document.querySelector('.sidebar-overlay');
+                    if (overlay) {
+                        overlay.style.opacity = '0';
+                        setTimeout(() => {
+                            overlay.remove();
+                        }, 300);
+                    }
+                }
+            }
+            
+            // 버튼 텍스트 업데이트
+            if (sidebar.classList.contains('collapsed')) {
+                sidebarToggle.innerHTML = '<span>☰</span>';
+                sidebarToggle.title = '사이드바 보이기';
+            } else {
+                sidebarToggle.innerHTML = '<span>☰</span>';
+                sidebarToggle.title = '사이드바 숨기기';
+            }
+        }
+
+        // 창 크기 변경 시 사이드바 상태 체크
+        window.addEventListener('resize', function() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+            
+            if (window.innerWidth > 768) {
+                // 데스크톱에서는 오버레이 제거
+                if (overlay) {
+                    overlay.remove();
+                }
+                // 데스크톱에서는 사이드바가 기본적으로 보임
+                if (sidebar.classList.contains('collapsed')) {
+                    sidebar.classList.remove('collapsed');
+                }
+            }
+        });
+
+        // 초기 로드 시 모바일에서는 사이드바 숨김
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.innerWidth <= 768) {
+                const sidebar = document.querySelector('.sidebar');
+                sidebar.classList.add('collapsed');
+            }
+        });
+
+        // Global variables
+        let currentSearchTags = [];
+        let currentThemes = [];
+        let isSearching = false;
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load initial theme if available
+            loadTheme('love-relationship');
+            
+            // Add some sample search tags for demonstration
+            setTimeout(() => {
+                currentSearchTags = ['love', 'relationship'];
+                updateSearchTags();
+                performThemeSearch();
+            }, 1000);
+        });
+
+        // Auto-complete functionality
+        const keywords = ['love', 'work', 'friendship', 'family', 'emotions', 'greetings', 'food', 'travel', 'business', 'comedy', 'drama', 'action'];
+        
+        document.getElementById('themeSearch').addEventListener('input', function(e) {
+            // Simple auto-complete logic would go here
+            const value = e.target.value.toLowerCase();
+            // In a real implementation, show suggestions
+        });
+    </script>
+</body>
+</html>
