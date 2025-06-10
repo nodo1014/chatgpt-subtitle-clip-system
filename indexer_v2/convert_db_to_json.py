@@ -33,8 +33,8 @@ def convert_db_to_json():
         # JSON 형태로 변환
         data = []
         for row in results:
-            # 파일명만 추출
-            media_file = Path(row[0]).name if row[0] else ''
+            # 전체 파일 경로 유지
+            media_file = row[0] if row[0] else ''
             directory = Path(row[5]).name if row[5] else ''
             
             data.append({
